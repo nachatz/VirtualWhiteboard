@@ -11,7 +11,7 @@ cap.set(4, 480)
 #Set brightness
 cap.set(10, 150)
 
-myColors = [[0,35,134,255,191,255],
+myColors = [[0,0,0,0,0,0],
             [133,56,0,159,156,255],
             [57,76,0,100,255,255]]
 
@@ -20,6 +20,10 @@ myColorValues = [[51, 153, 255],
                  [0, 255, 0]]
 
 myPoints = []
+drawL = []
+textOnScreen = "Read"
+write = 0
+detection = 0
 
 
 def findColor(img, myColors, myColorValues):
@@ -31,7 +35,7 @@ def findColor(img, myColors, myColorValues):
         upper = np.array([color[3:6]])
         mask = cv2.inRange(imgHSV, lower, upper)
         x,y = getContours(mask)
-        cv2.circle(imgResult, (x,y), 10, myColorValues[count], cv2.FILLED)
+        cv2.circle(imgResult, (x,y), 10, myColorValues[count],2, cv2.FILLED)
         if x!= 0 and y != 0:
             newPoints.append([x,y,count])
         count += 1
@@ -50,22 +54,52 @@ def getContours(img):
             x, y, w, h = cv2.boundingRect(approx)
     return x+w//2, y
 
-def drawOnCanvas(myPoints, myColorValues):
+def drawOnCanvas(myPoints, myColorValues, text):
     for point in myPoints:
         cv2.circle(imgResult, (point[0], point[1]), 10, myColorValues[point[2]], cv2.FILLED)
+
+def drawText(text):
+    cv2.putText(imgResult, text, (520, 35), 1, cv2.FONT_HERSHEY_COMPLEX, (0,0,255), 2)
 
 
 #Read each frame and display
 while True:
     success, img = cap.read()
+    img = cv2.flip(img,1)
     imgResult = img.copy()
-    newPoints = findColor(img, myColors, myColorValues)
-    if len(newPoints) != 0:
-        for newP in newPoints:
-            myPoints.append(newP)
+
+    if cv2.waitKey(1) & 0xFF == ord('c'):
+        myPoints = []
+        imgResult = img.copy()
+        textOnScreen = "Read"
+        write = 0
+    elif cv2.waitKey(1) & 0xFF == ord('d'):
+        textOnScreen = "Detection"
+        write = 1
+    elif cv2.waitKey(1) & 0xFF == ord('r'):
+        textOnScreen = "Read"
+        write = 0
+    elif cv2.waitKey(1) & 0xFF == ord('w'):
+        textOnScreen = "Write"
+        write = 1
+    elif cv2.waitKey(1) & 0xFF == ord('q'):
+        exit(0)
+
+    #print(write)
+    if write:
+        newPoints = findColor(img, myColors, myColorValues)
+        if len(newPoints) != 0:
+            for newP in newPoints:
+                myPoints.append(newP)
     if len(myPoints) != 0:
-        drawOnCanvas(myPoints, myColorValues)
+        drawOnCanvas(myPoints, myColorValues, textOnScreen)
+
+    drawText(textOnScreen)
+
     cv2.imshow("Video", imgResult)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+
+
+
+
+
